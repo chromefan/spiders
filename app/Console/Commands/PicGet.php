@@ -72,7 +72,6 @@ class PicGet extends Command
                     $album_id = DB::table('album')->insertGetId($album);
                     echo "\t $album_id";
                     $this->getPhotos($urls[$k],$album_id);
-                    exit;
                 }
             }
         }
