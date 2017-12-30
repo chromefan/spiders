@@ -70,8 +70,10 @@ class PicGet extends Command
                     $album['cate_id'] = $cate->id;
                     $album['path'] = $image_path;
                     $album_id = DB::table('album')->insertGetId($album);
-                    echo "\t $album_id";
-                    $this->getPhotos($urls[$k],$album_id);
+                    if($album_id>0){
+                        echo "\t $album_id";
+                        $this->getPhotos($urls[$k],$album_id);
+                    }
                 }
             }
         }
