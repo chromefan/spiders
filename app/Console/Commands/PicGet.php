@@ -55,7 +55,7 @@ class PicGet extends Command
         foreach ($cates as $cate){
             $url = $base_url.'/'.$cate->cate_key;
             var_dump($url);
-            $html = $client->request('get',$url)->getBody()->getContents();
+            $html = $client->request('get',$url,['timeout' => 3.14])->getBody()->getContents();
             preg_match_all($patterns['list'],$html,$res);
             if(!empty($res[1])){
                 $urls = $res[1];
@@ -82,12 +82,12 @@ class PicGet extends Command
         $client = new Client();
         $url = $this->base_url.$url;
         $patterns = $this->getPattern();
-        $status = $client->request('get',$url)->getStatusCode();
+        $status = $client->request('get',$url,['timeout' => 3.14])->getStatusCode();
         preg_match('|\/(\d+?)\.html|',$url,$res);
         $url_code = $res[1];
 
         if($status==200){
-            $html  = $client->request('get',$url)->getBody()->getContents();
+            $html  = $client->request('get',$url,['timeout' => 3.14])->getBody()->getContents();
             preg_match($patterns['total_page'],$html,$res);
             $total_page = (int)$res[1];
             for($page=1;$page<=$total_page;$page++){
@@ -97,7 +97,7 @@ class PicGet extends Command
                 }else{
                     $page_url = $this->base_url.'/view/'.$url_code.'_'.$page.'.html';
                 }
-                $html  = $client->request('get',$page_url)->getBody()->getContents();
+                $html  = $client->request('get',$page_url,['timeout' => 3.14])->getBody()->getContents();
                 preg_match($patterns['pic'],$html,$res);
                 if(!empty($res[1])){
                     $image_path = $this->saveImage($res[1]);
