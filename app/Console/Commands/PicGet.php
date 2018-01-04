@@ -6,7 +6,6 @@ use App\Libs\Http;
 use GuzzleHttp\Client;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Ixudra\Curl\Facades\Curl;
 
 class PicGet extends Command
 {
