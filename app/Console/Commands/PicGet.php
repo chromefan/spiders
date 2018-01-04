@@ -61,8 +61,10 @@ class PicGet extends Command
                 $srcs = $res[2];
                 $titles = $res[3];
                 foreach ($urls as $k=>$v){
+                    if(DB::table('album')->where('url',$urls[$k])->count()>0){
+                        continue;
+                    }
                     $image_path = $this->saveImage($srcs[$k]);
-
                     $album['url'] = $urls[$k];
                     $album['src'] = $srcs[$k];
                     $album['title'] = $titles[$k];
