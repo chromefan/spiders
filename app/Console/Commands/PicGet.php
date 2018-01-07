@@ -43,9 +43,12 @@ class PicGet extends Command
      */
     public function handle()
     {
+        echo date('Y-m-d H:i:s')."\n";
         $this->pic();
+        echo date('Y-m-d H:i:s')."\n";
     }
     private function pic(){
+
         $base_url = 'http://www.58mm.top';
         $this->base_url = $base_url;
         $cates = DB::table('category')->get();
