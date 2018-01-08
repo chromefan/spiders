@@ -3,12 +3,19 @@
 namespace App\Console\Commands;
 
 use App\Libs\Http;
-use GuzzleHttp\Client;
+use App\Libs\MutiRequest;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
 
 class PicGet extends Command
 {
+    private $totalPageCount;
+    private $counter        = 1;
+    private $concurrency    = 7;  // 同时并发抓取
+    private $users = [];
+
     /**
      * The name and signature of the console command.
      *
@@ -34,6 +41,7 @@ class PicGet extends Command
     public function __construct()
     {
         parent::__construct();
+        $this->base_url = 'http://www.58mm.top';
     }
 
     /**
@@ -43,40 +51,52 @@ class PicGet extends Command
      */
     public function handle()
     {
-        echo date('Y-m-d H:i:s')."\n";
-        $this->pic();
-        echo date('Y-m-d H:i:s')."\n";
+        $this->info(date('Y-m-d H:i:s')."\n");
+        $this->pic(3);
+        $this->info(date('Y-m-d H:i:s')."\n");
     }
-    private function pic(){
+    private function mutiRun(){
+
+        $cates = DB::table('category')->get();
+        $totalPage = 3;
+        foreach ($cates as $cate){
+            for ($i = 1 ; $i<=$totalPage; $i++){
+                $uri = $cate->cate_key.'/list_'.$i.'.html';
+                $this->pic($uri);
+            }
+        }
+
+    }
+    private function pic($totalPage){
 
         $base_url = 'http://www.58mm.top';
-        $this->base_url = $base_url;
         $cates = DB::table('category')->get();
         $patterns = $this->getPattern();
         $client = new Client();
         foreach ($cates as $cate){
-            $url = $base_url.'/'.$cate->cate_key;
-            var_dump($url);
-            $html = $client->request('get',$url,['timeout' => 3.14])->getBody()->getContents();
-            preg_match_all($patterns['list'],$html,$res);
-            if(!empty($res[1])){
-                $urls = $res[1];
-                $srcs = $res[2];
-                $titles = $res[3];
-                foreach ($urls as $k=>$v){
-                    if(DB::table('album')->where('url',$urls[$k])->count()>0){
-                        continue;
-                    }
-                    $image_path = $this->saveImage($srcs[$k]);
-                    $album['url'] = $urls[$k];
-                    $album['src'] = $srcs[$k];
-                    $album['title'] = $titles[$k];
-                    $album['cate_id'] = $cate->id;
-                    $album['path'] = $image_path;
-                    $album_id = DB::table('album')->insertGetId($album);
-                    if($album_id>0){
-                        echo "\t $album_id";
-                        $this->getPhotos($urls[$k],$album_id);
+            for ($i = 1 ; $i<=$totalPage; $i++) {
+                $url = $base_url.'/'.$cate->cate_key.'/list_'.$i.'.html';
+                $html = $client->request('get', $url, ['timeout' => 3.14])->getBody()->getContents();
+                preg_match_all($patterns['list'], $html, $res);
+                if (!empty($res[1])) {
+                    $urls = $res[1];
+                    $srcs = $res[2];
+                    $titles = $res[3];
+                    foreach ($urls as $k => $v) {
+                        if (DB::table('album')->where('url', $urls[$k])->count() > 0) {
+                            continue;
+                        }
+                        $image_path = $this->saveImage($srcs[$k]);
+                        $album['url'] = $urls[$k];
+                        $album['src'] = $srcs[$k];
+                        $album['title'] = $titles[$k];
+                        $album['cate_id'] = $cate->id;
+                        $album['path'] = $image_path;
+                        $album_id = DB::table('album')->insertGetId($album);
+                        if ($album_id > 0) {
+                            echo "\t $album_id";
+                            $this->getPhotos($urls[$k], $album_id);
+                        }
                     }
                 }
             }
@@ -136,6 +156,14 @@ class PicGet extends Command
             'pic'=>"|src='(.+?)' alt='(.+?)'\s+/>|i",
             'total_page'=>'|<a>共(\d+)页: </a>|'
         ];
+    }
+
+    public function countedAndCheckEnded()
+    {
+        if ($this->counter < $this->totalPageCount){
+            $this->counter++;
+            return;
+        }
     }
 
 }
