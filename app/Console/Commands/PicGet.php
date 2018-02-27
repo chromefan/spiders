@@ -58,7 +58,7 @@ class PicGet extends Command
     private function mutiRun(){
 
         $cates = DB::table('category')->get();
-        $totalPage = 3;
+        $totalPage = 10;
         foreach ($cates as $cate){
             for ($i = 1 ; $i<=$totalPage; $i++){
                 $uri = $cate->cate_key.'/list_'.$i.'.html';
