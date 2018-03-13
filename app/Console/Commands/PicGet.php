@@ -141,7 +141,7 @@ class PicGet extends Command
         $client = new Client(['verify' => false]);  //忽略SSL错误
         $ext = '.jpg';
         $filename = uniqid().time().$ext;
-        $save_path = storage_path('images');
+        $save_path = '/var/www/pic/public/images';
         $file_path = Http::mkMd5Dir($src,$save_path);
         $file = $file_path.$filename;
         $response = $client->get($src, ['save_to' => $file]);
