@@ -52,7 +52,7 @@ class PicGet extends Command
     public function handle()
     {
         $this->info(date('Y-m-d H:i:s')."\n");
-        $this->pic(60);
+        $this->pic(100);
         $this->info(date('Y-m-d H:i:s')."\n");
     }
     private function mutiRun(){
