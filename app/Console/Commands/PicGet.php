@@ -164,14 +164,15 @@ class PicGet extends Command
                     break;
                 }
                 foreach ($res[1] as $k =>$img_src){
-                        $image_path = $this->saveImage($img_src);
-                        $photo['url'] = $url;
-                        $photo['src'] = $img_src;
-                        $photo['title'] = $res[2][$k];
-                        $photo['path'] = $image_path;
-                        $photo['album_id'] = $album_id;
-                        $photo_id = DB::table('photos')->insertGetId($photo);
-                        echo "\t $photo_id";
+                    var_dump($img_src);
+                    $image_path = $this->saveImage($img_src);
+                    $photo['url'] = $url;
+                    $photo['src'] = $img_src;
+                    $photo['title'] = $res[2][$k];
+                    $photo['path'] = $image_path;
+                    $photo['album_id'] = $album_id;
+                    $photo_id = DB::table('photos')->insertGetId($photo);
+                    echo "\t $photo_id";
                 }
             }
         }
@@ -192,6 +193,10 @@ class PicGet extends Command
         $file = $file_path.$filename;
         $response = $client->get($src, ['save_to' => $file,'headers'=>$headers]);
         $image_path = Http::getMd5Dir($src);
+        if(!file_exists($file)){
+            var_dump($src,$file);
+            exit;
+        }
         if($response->getStatusCode()==200){
             return $image_path.$filename;
         }
