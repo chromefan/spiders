@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Libs\Http;
 use App\Libs\MutiRequest;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
@@ -53,6 +54,7 @@ class PicGet extends Command
      */
     public function handle()
     {
+        $this->test();
         $this->info(date('Y-m-d H:i:s')."\n");
         $this->pic(100);
         $this->info(date('Y-m-d H:i:s')."\n");
@@ -69,6 +71,16 @@ class PicGet extends Command
         }
 
     }
+    private function test(){
+        $client = new Client();
+        $url = 'https://www.meitulu.com/item/14050_26.html';
+        try {
+            $status = $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
+        } catch (RequestException $e) {
+            var_dump($e->getCode());
+        }
+        exit;
+    }
     private function pic($totalPage){
 
         $base_url = $this->base_url;
@@ -82,10 +94,14 @@ class PicGet extends Command
                 }else{
                     $url = $base_url.'/t/'.$cate->cate_key.'/'.$i.'.html';
                 }
-                $status = $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
-                if($status<>200){
-                    continue;
+                try {
+                    $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
+                } catch (RequestException $e) {
+                    if($e->getCode() <> 200){
+                        break;
+                    }
                 }
+
                 $html = $client->request('get', $url, ['timeout' => $this->timeout])->getBody()->getContents();
                 preg_match_all($patterns['list'], $html, $res);
                 if (!empty($res[1])) {
@@ -118,7 +134,14 @@ class PicGet extends Command
         $client = new Client();
 
         $patterns = $this->getPattern();
-        $status = $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
+        $status = 0;
+        try {
+            $status = $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
+        } catch (RequestException $e) {
+            if($e->getCode() <> 200){
+                return ;
+            }
+        }
         preg_match('|\/(\d+?)\.html|',$url,$res);
         $url_code = $res[1];
         if($status==200){
@@ -128,6 +151,13 @@ class PicGet extends Command
                     $page_url = $url;
                 }else{
                     $page_url = $this->base_url.'/item/'.$url_code.'_'.$page.'.html';
+                }
+                try {
+                    $client->request('get',$page_url,['timeout' => $this->timeout]);
+                } catch (RequestException $e) {
+                    if($e->getCode() <> 200){
+                        break ;
+                    }
                 }
                 $html  = $client->request('get',$page_url,['timeout' => $this->timeout])->getBody()->getContents();
                 preg_match_all($patterns['pic'],$html,$res);
