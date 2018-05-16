@@ -37,13 +37,11 @@ class PicGet extends Command
      */
 
     protected $base_url;
-    protected $timeout;
 
     public function __construct()
     {
         parent::__construct();
-        $this->base_url = 'https://www.meitulu.com';
-        $this->timeout = 100;
+        $this->base_url = 'http://www.58mm.top';
     }
 
     /**
@@ -71,22 +69,14 @@ class PicGet extends Command
     }
     private function pic($totalPage){
 
-        $base_url = $this->base_url;
+        $base_url = 'http://www.58mm.top';
         $cates = DB::table('category')->get();
         $patterns = $this->getPattern();
         $client = new Client();
         foreach ($cates as $cate){
             for ($i = 1 ; $i<=$totalPage; $i++) {
-                if($i == 1){
-                    $url = $base_url.'/t/'.$cate->cate_key.'/';
-                }else{
-                    $url = $base_url.'/t/'.$cate->cate_key.'/'.$i.'.html';
-                }
-                $status = $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
-                if($status<>200){
-                    continue;
-                }
-                $html = $client->request('get', $url, ['timeout' => $this->timeout])->getBody()->getContents();
+                $url = $base_url.'/'.$cate->cate_key.'/list_'.$i.'.html';
+                $html = $client->request('get', $url, ['timeout' => 3.14])->getBody()->getContents();
                 preg_match_all($patterns['list'], $html, $res);
                 if (!empty($res[1])) {
                     $urls = $res[1];
@@ -108,60 +98,53 @@ class PicGet extends Command
                             $this->getPhotos($urls[$k], $album_id);
                         }
                     }
-                }else{
-                    break;
                 }
             }
         }
     }
     private function getPhotos($url,$album_id){
         $client = new Client();
-
+        $url = $this->base_url.$url;
         $patterns = $this->getPattern();
-        $status = $client->request('get',$url,['timeout' => $this->timeout])->getStatusCode();
+        $status = $client->request('get',$url,['timeout' => 3.14])->getStatusCode();
         preg_match('|\/(\d+?)\.html|',$url,$res);
         $url_code = $res[1];
+
         if($status==200){
-            $total_page = 100;
+            $html  = $client->request('get',$url,['timeout' => 3.14])->getBody()->getContents();
+            preg_match($patterns['total_page'],$html,$res);
+            $total_page = (int)$res[1];
             for($page=1;$page<=$total_page;$page++){
+
                 if($page==1){
                     $page_url = $url;
                 }else{
-                    $page_url = $this->base_url.'/item/'.$url_code.'_'.$page.'.html';
+                    $page_url = $this->base_url.'/view/'.$url_code.'_'.$page.'.html';
                 }
-                $html  = $client->request('get',$page_url,['timeout' => $this->timeout])->getBody()->getContents();
-                preg_match_all($patterns['pic'],$html,$res);
-                if(!isset($res[1])){
-                    break;
-                }
-                foreach ($res[1] as $k =>$img_src){
-                        $image_path = $this->saveImage($img_src);
-                        $photo['url'] = $url;
-                        $photo['src'] = $img_src;
-                        $photo['title'] = $res[2][$k];
-                        $photo['path'] = $image_path;
-                        $photo['album_id'] = $album_id;
-                        $photo_id = DB::table('photos')->insertGetId($photo);
-                        echo "\t $photo_id";
+                $html  = $client->request('get',$page_url,['timeout' => 3.14])->getBody()->getContents();
+                preg_match($patterns['pic'],$html,$res);
+                if(!empty($res[1])){
+                    $image_path = $this->saveImage($res[1]);
+                    $photo['url'] = $url;
+                    $photo['src'] = $res[1];
+                    $photo['title'] = $res[2];
+                    $photo['path'] = $image_path;
+                    $photo['album_id'] = $album_id;
+                    $photo_id = DB::table('photos')->insertGetId($photo);
+                    echo "\t $photo_id";
                 }
             }
         }
     }
 
-
     private function saveImage($src){
-
         $client = new Client(['verify' => false]);  //忽略SSL错误
-        $headers = [
-            'Content-Type' => 'image/jpg',
-            'Referer' => 'https://www.meitulu.com/'
-        ];
         $ext = '.jpg';
         $filename = uniqid().time().$ext;
         $save_path = '/var/www/pic/public/images';
         $file_path = Http::mkMd5Dir($src,$save_path);
         $file = $file_path.$filename;
-        $response = $client->get($src, ['save_to' => $file,'headers'=>$headers]);
+        $response = $client->get($src, ['save_to' => $file]);
         $image_path = Http::getMd5Dir($src);
         if($response->getStatusCode()==200){
             return $image_path.$filename;
@@ -169,8 +152,8 @@ class PicGet extends Command
     }
     private function getPattern(){
         return [
-            'list'=>"|<a href=\"(.+?)\" target=\"_blank\"><img src=\"(.+?)\" alt=\"(.+?)\"|i",
-            'pic'=>"|<img src=\"(.+?)\" alt=\"(.+?)\" class=\"content_img\"|i",
+            'list'=>"|href=\'(.+?)\'><img src=\'(.+?)\' alt=\'(.+?)\'/></a></p>|i",
+            'pic'=>"|src='(.+?)' alt='(.+?)'\s+/>|i",
             'total_page'=>'|<a>共(\d+)页: </a>|'
         ];
     }
