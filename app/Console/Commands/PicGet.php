@@ -54,9 +54,8 @@ class PicGet extends Command
      */
     public function handle()
     {
-        $this->test();
         $this->info(date('Y-m-d H:i:s')."\n");
-        $this->pic(100);
+        $this->pic(1000);
         $this->info(date('Y-m-d H:i:s')."\n");
     }
     private function mutiRun(){
