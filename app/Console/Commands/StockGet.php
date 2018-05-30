@@ -69,7 +69,8 @@ class StockGet extends Command
             $html = file_get_contents($url);
             preg_match('/\[.+?\]/',$html,$res);
             $json = json_decode($res[0],true);
-            $stock_data=$price=[];
+            $stock_data=[];
+            $price=[];
             foreach ($json as $k=> $v){
                 $stock = explode(',',$v);
 
