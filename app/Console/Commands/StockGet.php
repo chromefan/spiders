@@ -86,12 +86,16 @@ class StockGet extends Command
                     $stock_data[$k]['price'] = (float)$stock[3];
                     $stock_data[$k]['market_type'] = 'hsa';
                 }
+                $find_num=DB::connection('stock')->table('price')->where('code',$stock[1])->where('day',date('Y-m-d'))->count();
+                if($find_num>0){
+                    continue;
+                }
                 $price[$k]['code']= $stock[1];
                 $price[$k]['price']= (float)$stock[3];
                 $price[$k]['price_change']= (float)$stock[5];
                 $price[$k]['vol']= (float)$stock[6];
                 $price[$k]['turnover']= (float)$stock[15];
-                $price[$k]['day']= date('Ymd');
+                $price[$k]['day']= date('Y-m-d');
             }
             DB::connection('stock')->table('stock')->insert($stock_data);
             DB::connection('stock')->table('price')->insert($price);
