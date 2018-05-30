@@ -3,12 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Libs\Http;
-use App\Libs\MutiRequest;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
-use GuzzleHttp\Pool;
 
 class PicGet extends Command
 {
