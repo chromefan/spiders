@@ -53,7 +53,7 @@ class PicGet extends Command
     public function handle()
     {
         $this->info(date('Y-m-d H:i:s')."\n");
-        $this->pic(1000);
+        $this->pic(100);
         $this->info(date('Y-m-d H:i:s')."\n");
     }
     private function mutiRun(){
@@ -81,7 +81,7 @@ class PicGet extends Command
     private function pic($totalPage){
 
         $base_url = $this->base_url;
-        $cates = DB::table('category')->get();
+        $cates = DB::table('category')->where('status',1)->get();
         $patterns = $this->getPattern();
         $client = new Client();
         foreach ($cates as $cate){
